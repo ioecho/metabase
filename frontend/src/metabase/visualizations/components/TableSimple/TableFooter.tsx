@@ -6,7 +6,7 @@ import { t } from "ttag";
 import CS from "metabase/css/core/index.css";
 import DashboardS from "metabase/css/dashboard.module.css";
 import EmbedFrameS from "metabase/public/components/EmbedFrame/EmbedFrame.module.css";
-import { Icon } from "metabase/ui";
+import { Icon, Select } from "metabase/ui";
 import { HARD_ROW_LIMIT } from "metabase-lib/v1/queries/utils";
 
 import {
@@ -25,6 +25,7 @@ interface TableFooterProps {
   onPreviousPage: () => void;
   onNextPage: () => void;
   singleItem?: boolean;
+  jumpPage?: (page: number) => void;
 }
 
 const TableFooter = forwardRef<HTMLDivElement, TableFooterProps>(
@@ -39,6 +40,7 @@ const TableFooter = forwardRef<HTMLDivElement, TableFooterProps>(
       onPreviousPage,
       onNextPage,
       singleItem,
+      jumpPage,
     }: TableFooterProps,
     ref,
   ) {
@@ -55,6 +57,10 @@ const TableFooter = forwardRef<HTMLDivElement, TableFooterProps>(
         ? t`Rows ${start + 1}-${end + 1} of first ${total}`
         : t`Rows ${start + 1}-${end + 1} of ${total}`;
     }, [total, start, end, limit, singleItem]);
+
+    const currentPage = useMemo(() => {
+      return Math.ceil(start / (end + 1 - start));
+    }, [start, end]);
 
     const handlePreviousPage = useCallback(
       (event: MouseEvent) => {
@@ -83,7 +89,35 @@ const TableFooter = forwardRef<HTMLDivElement, TableFooterProps>(
         data-testid={dataTestId}
         ref={ref}
       >
-        <PaginationMessage>{paginateMessage}</PaginationMessage>
+        <PaginationMessage>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div>{paginateMessage}</div>
+            <Select
+              name="jump-page"
+              value={`${currentPage}`}
+              onChange={value => {
+                if (!jumpPage) {
+                  return;
+                }
+                jumpPage(Number(value));
+              }}
+              data={
+                Array.from(
+                  {
+                    length:
+                      total / (end + 1 - start) +
+                      (total % (end + 1 - start) > 0 ? 1 : 0),
+                  },
+                  (_, i) => i + 1,
+                ).map(page => ({
+                  value: (page - 1).toString(),
+                  label: `${(page - 1) * (end + 1 - start) + 1}~${Math.min(page * (end + 1 - start), total)}`,
+                })) ?? []
+              }
+              style={{ margin: "0 1rem" }}
+            />
+          </div>
+        </PaginationMessage>
         <PaginationButton
           className={CS.textPrimary}
           aria-label={t`Previous page`}

@@ -140,6 +140,10 @@ function TableSimpleInner({
     setPage(p => p + 1);
   }, []);
 
+  const jumpPage = useCallback((p: number) => {
+    setPage(p);
+  }, []);
+
   const rowIndexes = useMemo(() => {
     let indexes = _.range(0, rows.length);
 
@@ -245,6 +249,7 @@ function TableSimpleInner({
           total={rows.length}
           onPreviousPage={handlePreviousPage}
           onNextPage={handleNextPage}
+          jumpPage={jumpPage}
           ref={footerRef}
         />
       )}
