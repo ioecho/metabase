@@ -31,6 +31,7 @@
    [metabase.server.middleware.session :as mw.session]
    [metabase.test :as mt]
    [metabase.test.data.users :as test.users]
+   [metabase.test.fixtures :as fixtures]
    [metabase.test.integrations.ldap :as ldap.test]
    [metabase.util :as u]
    [metabase.util.password :as u.password]
@@ -38,6 +39,10 @@
    [toucan2.tools.with-temp :as t2.with-temp]))
 
 (set! *warn-on-reflection* true)
+
+(use-fixtures
+  :once
+  (fixtures/initialize :test-users))
 
 (comment
   ;; this has to be loaded for the Google Auth tests to work
@@ -137,7 +142,7 @@
 ;; admin shouldn't get email saying user joined until they accept the invite (i.e., reset their password)
 
 (deftest new-user-emails-test
-  (notification.tu/with-send-notification-sync!
+  (notification.tu/with-send-notification-sync
     (testing "New user should get an invite email"
       (is (= {"<New User>" ["You're invited to join Metabase's Metabase"]}
              (invite-user-accept-and-check-inboxes! :invitor default-invitor, :accept-invite? false))))
