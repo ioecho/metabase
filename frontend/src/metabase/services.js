@@ -5,7 +5,7 @@ import { IS_EMBED_PREVIEW } from "metabase/lib/embed";
 import Question from "metabase-lib/v1/Question";
 import { normalizeParameters } from "metabase-lib/v1/parameters/utils/parameter-values";
 import { isNative } from "metabase-lib/v1/queries/utils/card";
-import { getPivotColumnSplit } from "metabase-lib/v1/queries/utils/pivot";
+import { getPivotOptions } from "metabase-lib/v1/queries/utils/pivot";
 
 // use different endpoints for embed previews
 const embedBase = IS_EMBED_PREVIEW ? "/api/preview_embed" : "/api/embed";
@@ -38,7 +38,7 @@ export function maybeUsePivotEndpoint(api, card, metadata) {
 
   function wrap(api) {
     return (params, ...rest) => {
-      const { pivot_rows, pivot_cols } = getPivotColumnSplit(question);
+      const { pivot_rows, pivot_cols } = getPivotOptions(question);
       return api({ ...params, pivot_rows, pivot_cols }, ...rest);
     };
   }
@@ -206,7 +206,7 @@ export const CollectionsApi = {
   getRoot: GET("/api/collection/root"),
   update: PUT("/api/collection/:id"),
   graph: GET("/api/collection/graph"),
-  updateGraph: PUT("/api/collection/graph"),
+  updateGraph: PUT("/api/collection/graph?skip-graph=true"),
 };
 
 const PIVOT_PUBLIC_PREFIX = "/api/public/pivot/";

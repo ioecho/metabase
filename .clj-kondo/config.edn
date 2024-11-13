@@ -298,7 +298,9 @@
     metabase.audit                 #{metabase.audit}
     metabase.bootstrap             #{metabase.bootstrap}
     metabase.cmd                   #{}                                                              ; there are no namespaces here since you shouldn't be using this in any other module.
-    metabase.channel               #{metabase.channel.core}
+    metabase.channel               #{metabase.channel.core
+                                     metabase.channel.render.core
+                                     metabase.channel.template.core}
     metabase.config                #{metabase.config}
     metabase.core                  #{metabase.core.initialization-status}                           ; TODO -- only namespace used outside of EE, this probably belongs in `metabase.server` anyway since that's the only place it's used.
     metabase.db                    #{metabase.db
@@ -326,7 +328,8 @@
     metabase.metabot               #{metabase.metabot}
     metabase.models                :any                                                             ; TODO -- scream, 62 namespaces used elsewhere, but to be fair a lot of these don't *need* to be required.
     metabase.moderation            #{metabase.moderation}
-    metabase.notification          #{metabase.notification.core}
+    metabase.notification          #{metabase.notification.core
+                                     metabase.notification.payload.core}
     metabase.permissions           #{metabase.permissions.util}                                     ; TODO -- this is currently the only namespace in this module. Give it a real API namespace?
     metabase.plugins               #{metabase.plugins
                                      metabase.plugins.classloader}                                  ; TODO -- not 100% sure the classloader belongs here
@@ -338,7 +341,8 @@
                                      metabase.query-analysis.failure-map}
     metabase.related               #{metabase.related}
     metabase.sample-data           #{metabase.sample-data}
-    metabase.search                #{metabase.search}
+    metabase.search                #{metabase.search
+                                     metabase.search.spec}
     metabase.server                #{metabase.server
                                      metabase.server.handler
                                      metabase.server.middleware.auth
@@ -546,6 +550,7 @@
     metabase.api.util                                             api.util
     metabase.async.streaming-response.thread-pool                 thread-pool
     metabase.channel.core                                         channel
+    metabase.channel.render.core                                  channel.render
     metabase.cmd.copy.h2                                          copy.h2
     metabase.config                                               config
     metabase.config.file                                          config.file
@@ -661,8 +666,9 @@
     metabase.related                                              related
     metabase.search.config                                        search.config
     metabase.search.filter                                        search.filter
+    metabase.search.in-place.filter                               search.in-place.filter
     metabase.search.util                                          search.util
-    metabase.search.scoring                                       scoring
+    metabase.search.in-place.scoring                              scoring
     metabase.server.middleware.auth                               mw.auth
     metabase.server.middleware.browser-cookie                     mw.browser-cookie
     metabase.server.middleware.exceptions                         mw.exceptions
@@ -848,6 +854,7 @@
    metabase.api.search-test/with-search-items-in-root-collection                                                             hooks.common/do*
    metabase.api.user-test/with-temp-user-email                                                                               hooks.common/with-one-binding
    metabase.async.streaming-response-test/with-start-execution-chan                                                          hooks.common/with-one-binding
+   metabase.channel.template.handlebars-test/with-temp-template                                                              hooks.common/with-vec-first-binding
    metabase.dashboard-subscription-test/with-link-card-fixture-for-dashboard                                                 hooks.common/let-second
    metabase.db.schema-migrations-test.impl/test-migrations                                                                   hooks.metabase.db.schema-migrations-test.impl/test-migrations
    metabase.driver.bigquery-cloud-sdk-test/calculate-bird-scarcity                                                           hooks.metabase.query-processor-test.expressions-test/calculate-bird-scarcity

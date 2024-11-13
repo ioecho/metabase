@@ -17,6 +17,7 @@ import {
   filterWidget,
   getNotebookStep,
   modal,
+  openNativeEditor,
   openNotebook,
   openOrdersTable,
   openPeopleTable,
@@ -28,6 +29,7 @@ import {
   restore,
   resyncDatabase,
   selectFilterOperator,
+  sidebar,
   startNewQuestion,
   tableHeaderClick,
   visitQuestionAdhoc,
@@ -1511,5 +1513,84 @@ describe("Issue 48851", () => {
       .type(manyValues, { timeout: 0 });
 
     popover().button("Add filter").should("be.visible");
+  });
+});
+
+describe("issue 49321", () => {
+  beforeEach(() => {
+    restore();
+    cy.signInAsNormalUser();
+  });
+
+  it("should not require multiple clicks to apply a filter (metabase#49321)", () => {
+    openProductsTable({ mode: "notebook" });
+    filter({ mode: "notebook" });
+    popover().within(() => {
+      cy.findByText("Title").click();
+      cy.findByText("Is").click();
+    });
+    popover().last().findByText("Contains").click();
+
+    popover().then($popover => {
+      const { width } = $popover[0].getBoundingClientRect();
+      cy.wrap(width).as("initialWidth");
+    });
+
+    popover()
+      .findByPlaceholderText("Enter some text")
+      .type("aaaaaaaaaa, bbbbbbbbbbb,");
+
+    cy.get("@initialWidth").then(initialWidth => {
+      popover().should($popover => {
+        const { width } = $popover[0].getBoundingClientRect();
+        expect(width).to.eq(initialWidth);
+      });
+    });
+  });
+});
+
+describe("issue 44665", () => {
+  beforeEach(() => {
+    restore();
+    cy.signInAsNormalUser();
+  });
+
+  it("should use the correct widget for the default value picker (metabase#44665)", () => {
+    openNativeEditor().type("select * from {{param");
+    sidebar()
+      .last()
+      .within(() => {
+        cy.findByText("Search box").click();
+        cy.findByText("Edit").click();
+      });
+
+    modal().within(() => {
+      cy.findByText("Custom list").click();
+      cy.findByRole("textbox").type("foo\nbar\nbaz");
+      cy.button("Done").click();
+    });
+
+    sidebar().last().findByText("Enter a default value…").click();
+    popover().within(() => {
+      cy.findByPlaceholderText("Enter a default value…").should("be.visible");
+      cy.findByText("foo").should("be.visible");
+      cy.findByText("bar").should("be.visible");
+      cy.findByText("baz").should("be.visible");
+    });
+
+    sidebar()
+      .last()
+      .within(() => {
+        cy.findByText("Enter a default value…").click();
+        cy.findByText("Dropdown list").click();
+        cy.findByText("Enter a default value…").click();
+      });
+
+    popover().within(() => {
+      cy.findByPlaceholderText("Enter a default value…").should("be.visible");
+      cy.findByText("foo").should("be.visible");
+      cy.findByText("bar").should("be.visible");
+      cy.findByText("baz").should("be.visible");
+    });
   });
 });

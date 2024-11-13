@@ -1,34 +1,29 @@
 import { SAMPLE_DATABASE } from "e2e/support/cypress_sample_database";
 import {
+  FIRST_COLLECTION_ID,
+  THIRD_COLLECTION_ID,
+} from "e2e/support/cypress_sample_instance_data";
+import {
   createQuestion,
-  modal,
   popover,
   restore,
-  setTokenFeatures,
   tableHeaderClick,
   tableInteractive,
-  visitFullAppEmbeddingUrl,
 } from "e2e/support/helpers";
+import { describeSDK } from "e2e/support/helpers/e2e-embedding-sdk-helpers";
 import {
-  EMBEDDING_SDK_STORY_HOST,
-  describeSDK,
-} from "e2e/support/helpers/e2e-embedding-sdk-helpers";
-import {
-  JWT_SHARED_SECRET,
-  setupJwt,
-} from "e2e/support/helpers/e2e-jwt-helpers";
+  getSdkRoot,
+  signInAsAdminAndEnableEmbeddingSdk,
+  visitInteractiveQuestionStory,
+} from "e2e/test/scenarios/embedding-sdk/helpers/interactive-question-e2e-helpers";
+import { saveInteractiveQuestionAsNewQuestion } from "e2e/test/scenarios/embedding-sdk/helpers/save-interactive-question-e2e-helpers";
 
 const { ORDERS, ORDERS_ID } = SAMPLE_DATABASE;
 
 describeSDK("scenarios > embedding-sdk > interactive-question", () => {
   beforeEach(() => {
     restore();
-    cy.signInAsAdmin();
-    setTokenFeatures("all");
-    setupJwt();
-    cy.request("PUT", "/api/setting", {
-      "enable-embedding-sdk": true,
-    });
+    signInAsAdminAndEnableEmbeddingSdk();
 
     createQuestion(
       {
@@ -44,45 +39,20 @@ describeSDK("scenarios > embedding-sdk > interactive-question", () => {
     );
 
     cy.signOut();
-
-    cy.intercept("GET", "/api/card/*").as("getCard");
-    cy.intercept("GET", "/api/user/current").as("getUser");
-    cy.intercept("POST", "/api/card/*/query").as("cardQuery");
-
-    cy.get("@questionId").then(questionId => {
-      visitFullAppEmbeddingUrl({
-        url: EMBEDDING_SDK_STORY_HOST,
-        qs: {
-          id: "embeddingsdk-interactivequestion--default",
-          viewMode: "story",
-        },
-        onBeforeLoad: (window: any) => {
-          window.JWT_SHARED_SECRET = JWT_SHARED_SECRET;
-          window.METABASE_INSTANCE_URL = Cypress.config().baseUrl;
-          window.QUESTION_ID = questionId;
-        },
-      });
-    });
-
-    cy.wait("@getUser").then(({ response }) => {
-      expect(response?.statusCode).to.equal(200);
-    });
-
-    cy.wait("@getCard").then(({ response }) => {
-      expect(response?.statusCode).to.equal(200);
-    });
   });
 
   it("should show question content", () => {
-    cy.get("#metabase-sdk-root")
-      .should("be.visible")
-      .within(() => {
-        cy.findByText("Product ID").should("be.visible");
-        cy.findByText("Max of Quantity").should("be.visible");
-      });
+    visitInteractiveQuestionStory();
+
+    getSdkRoot().within(() => {
+      cy.findByText("Product ID").should("be.visible");
+      cy.findByText("Max of Quantity").should("be.visible");
+    });
   });
 
   it("should not fail on aggregated question drill", () => {
+    visitInteractiveQuestionStory();
+
     cy.wait("@cardQuery").then(({ response }) => {
       expect(response?.statusCode).to.equal(202);
     });
@@ -103,6 +73,8 @@ describeSDK("scenarios > embedding-sdk > interactive-question", () => {
   });
 
   it("should be able to hide columns from a table", () => {
+    visitInteractiveQuestionStory();
+
     cy.wait("@cardQuery").then(({ response }) => {
       expect(response?.statusCode).to.equal(202);
     });
@@ -118,28 +90,68 @@ describeSDK("scenarios > embedding-sdk > interactive-question", () => {
     tableInteractive().findByText("Max of Quantity").should("not.exist");
   });
 
-  it("can save a question", () => {
-    cy.intercept("POST", "/api/card").as("createCard");
+  it("can save a question to a default collection", () => {
+    visitInteractiveQuestionStory();
 
-    cy.findAllByTestId("cell-data").last().click();
-
-    popover().findByText("See these Orders").click();
-
-    cy.findByRole("button", { name: "Save" }).click();
-
-    modal().within(() => {
-      cy.findByRole("radiogroup").findByText("Save as new question").click();
-
-      cy.findByPlaceholderText("What is the name of your question?")
-        .clear()
-        .type("Foo Bar Orders");
-
-      cy.findByRole("button", { name: "Save" }).click();
+    saveInteractiveQuestionAsNewQuestion({
+      entityName: "Orders",
+      questionName: "Sample Orders 1",
     });
 
     cy.wait("@createCard").then(({ response }) => {
       expect(response?.statusCode).to.equal(200);
-      expect(response?.body.name).to.equal("Foo Bar Orders");
+      expect(response?.body.name).to.equal("Sample Orders 1");
+      expect(response?.body.collection_id).to.equal(null);
     });
+  });
+
+  it("can save a question to a selected collection", () => {
+    visitInteractiveQuestionStory();
+
+    saveInteractiveQuestionAsNewQuestion({
+      entityName: "Orders",
+      questionName: "Sample Orders 2",
+      collectionPickerPath: ["Our analytics", "First collection"],
+    });
+
+    cy.wait("@createCard").then(({ response }) => {
+      expect(response?.statusCode).to.equal(200);
+      expect(response?.body.name).to.equal("Sample Orders 2");
+      expect(response?.body.collection_id).to.equal(FIRST_COLLECTION_ID);
+    });
+  });
+
+  it("can save a question to a pre-defined collection", () => {
+    visitInteractiveQuestionStory({
+      saveToCollectionId: Number(THIRD_COLLECTION_ID),
+    });
+
+    saveInteractiveQuestionAsNewQuestion({
+      entityName: "Orders",
+      questionName: "Sample Orders 3",
+    });
+
+    cy.wait("@createCard").then(({ response }) => {
+      expect(response?.statusCode).to.equal(200);
+      expect(response?.body.name).to.equal("Sample Orders 3");
+      expect(response?.body.collection_id).to.equal(THIRD_COLLECTION_ID);
+    });
+  });
+
+  it("can add a filter via the FilterPicker component", () => {
+    visitInteractiveQuestionStory({
+      storyId:
+        "embeddingsdk-interactivequestion-filterpicker--picker-in-popover",
+    });
+
+    getSdkRoot().findByText("Filter").click();
+
+    popover().within(() => {
+      cy.findByText("User ID").click();
+      cy.findByPlaceholderText("Enter an ID").type("12");
+      cy.findByText("Add filter").click();
+    });
+
+    getSdkRoot().contains("User ID is 12");
   });
 });
