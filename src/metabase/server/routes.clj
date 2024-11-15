@@ -41,6 +41,10 @@
     (redirect-including-query-string (format "%s/api/embed/card/%s/query/%s" (public-settings/site-url) token export-format)))
   (GET "*" [] index/embed))
 
+;; echo routes.
+(defroutes ^:private echo-routes
+  (GET "*" [] index/echo))
+
 (defroutes ^{:doc "Top-level ring routes for Metabase.", :arglists '([request] [request respond raise])} routes
   (or (some-> (resolve 'metabase-enterprise.sso.api.routes/routes) var-get)
       (fn [_ respond _]
@@ -80,5 +84,7 @@
   (context "/public" [] public-routes)
   ;; ^/emebed/ -> Embed frontend and download routes
   (context "/embed" [] embed-routes)
+  ;; ^/echo/ -> Echo frontend and download routes
+  (context "/echo" [] echo-routes)
   ;; Anything else (e.g. /user/edit_current) should serve up index.html; React app will handle the rest
   (GET "*" [] index/index))
