@@ -24,6 +24,7 @@
     // `frontend/src/metabase/App.tsx`, since now we're loading both JS and TS files.
     "frontend/src/metabase/app-main.js",
     "frontend/src/metabase/app-public.js",
-    "frontend/src/metabase/app-embed.js"
+    "frontend/src/metabase/app-embed.js",
+    "frontend/src/metabase/app-echo.js"
   ]
 }
