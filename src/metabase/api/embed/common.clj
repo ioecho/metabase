@@ -586,6 +586,7 @@
         id->slug                                       (into {} (map (juxt :id :slug) parameters))
         slug->id                                       (into {} (map (juxt :slug :id) parameters))
         searched-param-slug                            (get id->slug searched-param-id)]
+    (log/infof "Querying table: %s with id: %s" :model/Dashboard dashboard-id)
     (try
       ;; you can only search for values of a parameter if it is ENABLED and NOT PRESENT in the JWT.
       (when-not (= (get embedding-params (keyword searched-param-slug)) "enabled")

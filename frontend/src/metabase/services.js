@@ -245,6 +245,20 @@ export const EmbedApi = {
   ),
 };
 
+const echoBase = "/api/echo";
+export const EchoApi = {
+  card: GET(embedBase + "/card/:token"),
+  cardQuery: GET(embedBase + "/card/:token/query"),
+  cardQueryPivot: GET(embedBase + "/pivot/card/:token/query"),
+  dashboard: GET(embedBase + "/dashboard/:token"),
+  dashboardCardQuery: GET(
+    echoBase + "/dashboard/:token/dashcard/:dashcardId/card/:cardId",
+  ),
+  dashboardCardQueryPivot: GET(
+    embedBase + "/pivot/dashboard/:token/dashcard/:dashcardId/card/:cardId",
+  ),
+};
+
 export const AutoApi = {
   dashboard: GET("/api/automagic-dashboards/:subPath", {
     // this prevents the `subPath` parameter from being URL encoded
@@ -477,7 +491,7 @@ export function setEmbedQuestionEndpoints(token) {
 
 export function setEmbedDashboardEndpoints(token) {
   if (!IS_EMBED_PREVIEW) {
-    setDashboardEndpoints("/api/embed/dashboard/:token", { token });
+    setDashboardEndpoints(`/api/${window.location.pathname.startsWith("/echo/") ? "echo" : "embed"}/dashboard/:token`, { token });
   } else {
     setDashboardParameterValuesEndpoint(embedBase);
   }

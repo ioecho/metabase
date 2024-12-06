@@ -174,7 +174,7 @@ export function getDashboardType(id: unknown) {
   } else if (isUuid(id)) {
     return "public";
   } else if (isJWT(id)) {
-    return "embed";
+    return window.location.pathname.startsWith("/echo/") ? "echo" : "embed";
   } else if (typeof id === "string" && /\/auto\/dashboard/.test(id)) {
     return "transient";
   } else {

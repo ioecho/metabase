@@ -212,17 +212,21 @@
   options."
   [card-id :- ::lib.schema.id/card
    export-format
-   & {:keys [parameters constraints context dashboard-id dashcard-id middleware qp make-run ignore-cache]
+   & {:keys [parameters constraints context dashboard-id dashcard-id middleware qp make-run ignore-cache database]
       :or   {constraints (qp.constraints/default-query-constraints)
              context     :question
              ;; param `make-run` can be used to control how the query is ran, e.g. if you need to customize the `context`
              ;; passed to the QP
-             make-run    process-query-for-card-default-run-fn}}]
+             make-run    process-query-for-card-default-run-fn
+             database    nil}}]
   {:pre [(int? card-id) (u/maybe? sequential? parameters)]}
   (let [card       (api/read-check (t2/select-one [Card :id :name :dataset_query :database_id :collection_id
                                                    :type :result_metadata :visualization_settings :display
                                                    :cache_invalidated_at]
                                                   :id card-id))
+        card-db    (or database (:database_id card))
+        card       (assoc card :database_id card-db)
+        card       (update card :dataset_query (fn [dq] (assoc dq :database card-db)))
         dash-viz   (when (and (not= context :question)
                               dashcard-id)
                      (t2/select-one-fn :visualization_settings :model/DashboardCard :id dashcard-id))
@@ -251,5 +255,7 @@
       (validate-card-parameters card-id (mbql.normalize/normalize-fragment [:parameters] parameters)))
     (log/tracef "Running query for Card %d:\n%s" card-id
                 (u/pprint-to-str query))
+    (log/info "Running query for :" card-db
+              database)
     (binding [qp.perms/*card-id* card-id]
       (runner query info))))

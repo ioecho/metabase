@@ -42,6 +42,7 @@ import {
   AutoApi,
   CardApi,
   DashboardApi,
+  EchoApi,
   EmbedApi,
   MetabaseApi,
   PublicApi,
@@ -315,6 +316,21 @@ export const fetchCardDataAction = createAsyncThunk<
     } else if (dashboardType === "embed") {
       result = await fetchDataOrError(
         maybeUsePivotEndpoint(EmbedApi.dashboardCardQuery, card)(
+          {
+            token: dashcard.dashboard_id,
+            dashcardId: dashcard.id,
+            cardId: card.id,
+            parameters: JSON.stringify(
+              getParameterValuesBySlug(dashboard.parameters, parameterValues),
+            ),
+            ignore_cache: ignoreCache,
+          },
+          queryOptions,
+        ),
+      );
+    } else if (dashboardType === "echo") {
+      result = await fetchDataOrError(
+        maybeUsePivotEndpoint(EchoApi.dashboardCardQuery, card)(
           {
             token: dashcard.dashboard_id,
             dashcardId: dashcard.id,
@@ -647,6 +663,19 @@ export const fetchDashboard = createAsyncThunk(
         };
       } else if (dashboardType === "embed") {
         result = await EmbedApi.dashboard(
+          { token: dashId, dashboard_load_id: dashboardLoadId },
+          { cancelled: fetchDashboardCancellation.promise },
+        );
+        result = {
+          ...result,
+          id: dashId,
+          dashcards: result.dashcards.map((dc: DashboardCard) => ({
+            ...dc,
+            dashboard_id: dashId,
+          })),
+        };
+      } else if (dashboardType === "echo") {
+        result = await EchoApi.dashboard(
           { token: dashId, dashboard_load_id: dashboardLoadId },
           { cancelled: fetchDashboardCancellation.promise },
         );

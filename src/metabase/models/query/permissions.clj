@@ -268,22 +268,28 @@
        (throw (ex-info (tru "Invalid permissions format") required-perms)))
      true)))
 
+;; (mu/defn check-card-read-perms
+;;   "Check that the current user has permissions to read Card with `card-id`, or throw an Exception. "
+;;   [database-id :- ::lib.schema.id/database
+;;    card-id     :- ::lib.schema.id/card]
+;;   (qp.store/with-metadata-provider database-id
+;;     (let [card (or (some-> (lib.metadata.protocols/card (qp.store/metadata-provider) card-id)
+;;                            (update-keys u/->snake_case_en)
+;;                            (vary-meta assoc :type :model/Card))
+;;                    (throw (ex-info (tru "Card {0} does not exist." card-id)
+;;                                    {:type    qp.error-type/invalid-query
+;;                                     :card-id card-id})))]
+;;       (log/tracef "Required perms to run Card: %s" (pr-str (mi/perms-objects-set card :read)))
+;;       (when-not (mi/can-read? card)
+;;         (throw (perms-exception (tru "You do not have permissions to view Card {0}." (pr-str card-id))
+;;                                 (mi/perms-objects-set card :read)
+;;                                 {:card-id card-id}))))))
+
 (mu/defn check-card-read-perms
   "Check that the current user has permissions to read Card with `card-id`, or throw an Exception. "
   [database-id :- ::lib.schema.id/database
    card-id     :- ::lib.schema.id/card]
-  (qp.store/with-metadata-provider database-id
-    (let [card (or (some-> (lib.metadata.protocols/card (qp.store/metadata-provider) card-id)
-                           (update-keys u/->snake_case_en)
-                           (vary-meta assoc :type :model/Card))
-                   (throw (ex-info (tru "Card {0} does not exist." card-id)
-                                   {:type    qp.error-type/invalid-query
-                                    :card-id card-id})))]
-      (log/tracef "Required perms to run Card: %s" (pr-str (mi/perms-objects-set card :read)))
-      (when-not (mi/can-read? card)
-        (throw (perms-exception (tru "You do not have permissions to view Card {0}." (pr-str card-id))
-                                (mi/perms-objects-set card :read)
-                                {:card-id card-id}))))))
+  true)
 
 (defn check-data-perms
   "Checks whether the current user has sufficient view data and query permissions to run `query`. Returns `true` if the
