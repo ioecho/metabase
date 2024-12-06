@@ -9,7 +9,7 @@
    [metabase.models.card :refer [Card]]
    [metabase.models.interface :as mi]
    [metabase.query-processor :as qp]
-   [metabase.search :as search]
+   [metabase.search.core :as search]
    [metabase.sync.schedules :as sync.schedules]
    [metabase.util.cron :as u.cron]
    [metabase.util.log :as log]
@@ -174,23 +174,24 @@
 (defn create
   "Create a model index"
   [{:keys [model-id pk-ref value-ref creator-id]}]
-  (first (t2/insert-returning-instances! ModelIndex
-                                         [{:model_id   model-id
-                                           ;; todo: sanitize these?
-                                           :pk_ref     pk-ref
-                                           :value_ref  value-ref
-                                           :schedule   (default-schedule)
-                                           :state      "initial"
-                                           :creator_id creator-id}])))
+  (t2/insert-returning-instance! ModelIndex
+                                 [{:model_id   model-id
+                                   ;; todo: sanitize these?
+                                   :pk_ref     pk-ref
+                                   :value_ref  value-ref
+                                   :schedule   (default-schedule)
+                                   :state      "initial"
+                                   :creator_id creator-id}]))
 
 ;;;; ------------------------------------------------- Search ----------------------------------------------------------
 
 (search/define-spec "indexed-entity"
   {:model        :model/ModelIndexValue
+   :visibility   :app-user
    :attrs        {:id            :model_pk
                   :collection-id :collection.id
                   :creator-id    false
-                ;; this seems wrong, I'd expect it to track whether the model is archived.
+                  ;; this seems wrong, I'd expect it to track whether the model is archived.
                   :archived      false
                   :database-id   :model.database_id
                   :created-at    false

@@ -8214,9 +8214,7 @@ databaseChangeLog:
         - customChange:
             class: "metabase.db.custom_migrations.MigrateUploadsSettings"
 
-  # This migration should be moved whenever the sample content is updated, so that it
-  # matches when the version that the sample content was updated from. See metabase#43200
-  # for an example where the content was updated.
+  # This migration has been moved.
   - changeSet:
       id: v50.2024-05-27T15:55:22
       author: calherries
@@ -8313,6 +8311,7 @@ databaseChangeLog:
       id: v50.2024-05-29T18:42:14
       author: johnswanson
       comment: Populate `archived_directly` and `archive_operation_id` (MySQL)
+      validCheckSum: ANY
       changes:
         - sqlFile:
             dbms: mysql
@@ -10026,48 +10025,6 @@ databaseChangeLog:
       rollback: # not necessary, will be removed with the table
 
   - changeSet:
-      id: v52.2024-10-01T08:00:01
-      author: qnkhuat
-      comment: Migrate user invited email to system event notification
-      rollback: # not necessary, will be removed with the table
-      preConditions:
-        - onFail: MARK_RAN
-        - sqlCheck:
-            expectedResult: 0
-            sql: SELECT count(*) FROM notification_subscription WHERE type = 'notification-subscription/system-event' AND event_name = 'event/user-invited'
-      changes:
-        - customChange:
-            class: "metabase.db.custom_migrations.CreateSystemNotificationUserJoined"
-
-  - changeSet:
-      id: v52.2024-10-01T08:00:02
-      author: qnkhuat
-      comment: Migrate user invited email to system event notification
-      rollback: # not necessary, will be removed with the table
-      preConditions:
-        - onFail: MARK_RAN
-        - sqlCheck:
-            expectedResult: 0
-            sql: SELECT count(*) FROM notification_subscription WHERE type = 'notification-subscription/system-event' AND event_name = 'event/alert-create'
-      changes:
-        - customChange:
-            class: "metabase.db.custom_migrations.CreateSystemNotificationAlertCreated"
-
-  - changeSet:
-      id: v52.2024-10-01T08:00:03
-      author: qnkhuat
-      comment: Migrate user invited email to system event notification
-      rollback: # not necessary, will be removed with the table
-      preConditions:
-        - onFail: MARK_RAN
-        - sqlCheck:
-            expectedResult: 0
-            sql: SELECT count(*) FROM notification_subscription WHERE type = 'notification-subscription/system-event' AND event_name = 'event/slack-token-invalid'
-      changes:
-        - customChange:
-            class: "metabase.db.custom_migrations.CreateSystemNotificationSlackTokenError"
-
-  - changeSet:
       id: v52.2024-10-15T08:00:00
       author: qnkhuat
       comment: add notification_subscription.cron_schedule
@@ -10087,7 +10044,34 @@ databaseChangeLog:
                   constraints:
                     nullable: true
 
-  # >>>>>>>>>> DO NOT ADD NEW MIGRATIONS BELOW THIS LINE! ADD THEM ABOVE <<<<<<<<<<
+  - changeSet:
+      id: v52.2024-10-26T18:42:42
+      author: metamben
+      comment: Add stage-number to dimension targets in parameter_mappings
+      changes:
+        - customChange:
+            class: "metabase.db.custom_migrations.AddStageNumberToParameterMappingTargets"
+
+  - changeSet:
+      id: v52.2024-11-12T15:13:18
+      author: metamben
+      comment: Add stage-number to dimension targets in visualization_settings
+      changes:
+        - customChange:
+            class: "metabase.db.custom_migrations.AddStageNumberToVizSettingsParameterMappingTargets"
+
+  # This migration should be changed to a no-op and a new migration inserted that does the load from edn whenever the
+  # sample content is updated, so that it matches when the version that the sample content was updated from. See
+  # metabase#50829 for an example where the content was updated.
+  - changeSet:
+      id: v52.2024-12-03T15:55:22
+      author: escherize
+      comment: Create New and improved Sample Content
+      changes:
+        - customChange:
+            class: "metabase.db.custom_migrations.CreateSampleContentV2"
+
+ # >>>>>>>>>> DO NOT ADD NEW MIGRATIONS BELOW THIS LINE! ADD THEM ABOVE <<<<<<<<<<
 
 ########################################################################################################################
 #

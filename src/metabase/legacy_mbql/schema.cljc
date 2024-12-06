@@ -89,6 +89,7 @@
    :week-of-year-instance
    :day-of-month
    :day-of-week
+   :day-of-week-iso
    :hour-of-day
    :minute-of-hour
    :second-of-minute])
@@ -251,6 +252,10 @@
    [:map
     {:error/message "field options"}
     [:base-type {:optional true} [:maybe ::lib.schema.common/base-type]]
+
+    ;; Following option conveys temporal unit that was set on a ref in previous stages. For details refer to
+    ;; [:metabase.lib.schema.ref/field.options] schema.
+    [:inherited-temporal-unit {:optional true} [:maybe ::DateTimeUnit]]
 
     [:source-field
      {:optional true
@@ -417,7 +422,7 @@
 (def boolean-functions
   "Functions that return boolean values. Should match [[BooleanExpression]]."
   #{:and :or :not :< :<= :> :>= := :!= :between :starts-with :ends-with :contains :does-not-contain :inside :is-empty
-    :not-empty :is-null :not-null :relative-time-interval :time-interval})
+    :not-empty :is-null :not-null :relative-time-interval :time-interval :during})
 
 (def ^:private aggregations
   #{:sum :avg :stddev :var :median :percentile :min :max :cum-count :cum-sum :count-where :sum-where :share :distinct
@@ -634,7 +639,7 @@
 (defclause ^{:requires-features #{:temporal-extract}} temporal-extract
   datetime DateTimeExpressionArg
   unit     [:ref ::TemporalExtractUnit]
-  mode     (optional [:ref ::ExtractWeekMode])) ;; only for get-week
+  mode     (optional [:ref ::ExtractWeekMode])) ;; only for get-week and get-day-of-week
 
 ;; SUGAR CLAUSE: get-year, get-month... clauses are all sugars clause that will be rewritten as [:temporal-extract column :year]
 (defclause ^{:requires-features #{:temporal-extract}} ^:sugar get-year
@@ -654,7 +659,8 @@
   date DateTimeExpressionArg)
 
 (defclause ^{:requires-features #{:temporal-extract}} ^:sugar get-day-of-week
-  date DateTimeExpressionArg)
+  date DateTimeExpressionArg
+  mode (optional [:ref ::ExtractWeekMode]))
 
 (defclause ^{:requires-features #{:temporal-extract}} ^:sugar get-hour
   datetime DateTimeExpressionArg)
@@ -859,6 +865,11 @@
   unit    [:ref ::RelativeDatetimeUnit]
   options (optional TimeIntervalOptions))
 
+(defclause ^:sugar during
+  field   Field
+  value   [:or ::lib.schema.literal/date ::lib.schema.literal/datetime]
+  unit    ::DateTimeUnit)
+
 (defclause ^:sugar relative-time-interval
   col           Field
   value         :int
@@ -882,7 +893,7 @@
    ;; filters drivers must implement
    and or not = != < > <= >= between starts-with ends-with contains
     ;; SUGAR filters drivers do not need to implement
-   does-not-contain inside is-empty not-empty is-null not-null relative-time-interval time-interval))
+   does-not-contain inside is-empty not-empty is-null not-null relative-time-interval time-interval during))
 
 (mr/def ::Filter
   [:multi
